@@ -187,7 +187,6 @@ ckpt_adapter/*
 *.json
 *.jsonl
 *.log
-*.txt
 rlhf/examples/vlm/rollout_dump_dir/
 running_logs/
 rlhf/examples/*/model_ckpt/
