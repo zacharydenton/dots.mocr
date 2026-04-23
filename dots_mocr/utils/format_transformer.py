@@ -167,9 +167,25 @@ def layoutjson2md(image: Image.Image, cells: list, text_key: str = 'text', no_pa
             continue
         
         if cell['category'] == 'Picture':
-            image_crop = image.crop((x1, y1, x2, y2))
-            image_base64 = PILimage_to_base64(image_crop)
-            text_items.append(f"![]({image_base64})")
+            # PATCH (gettysburg-simulation): clamp bbox to image bounds
+            # before crop. Upstream dots.mocr crashes with
+            # "SystemError: tile cannot extend outside image" when the
+            # layout model returns out-of-range coordinates (occasionally
+            # happens near page edges or on unusual aspect ratios). Clamp
+            # + fail-safe skip preserves the rest of the page's text.
+            iw, ih = image.size
+            cx1, cy1 = max(0, x1), max(0, y1)
+            cx2, cy2 = min(iw, x2), min(ih, y2)
+            if cx2 <= cx1 or cy2 <= cy1:
+                continue
+            try:
+                image_crop = image.crop((cx1, cy1, cx2, cy2))
+                image_base64 = PILimage_to_base64(image_crop)
+                text_items.append(f"![]({image_base64})")
+            except (SystemError, ValueError, OSError):
+                # PIL still couldn't encode despite clamping; downstream
+                # _BASE64_IMG_RE strips these anyway, so skipping is safe.
+                continue
         elif cell['category'] == 'Formula':
             text_items.append(get_formula_in_markdown(text))
         else:            
