@@ -113,7 +113,7 @@ def load_images_from_pdf(pdf_file, dpi=200, start_page_id=0, end_page_id=None) -
                 is_safe, reason = is_page_safe_to_render(page)
                 if not is_safe:
                     print(f"pdf page {index} is not safe to render, skip")
-                    return []
+                    continue
                 img = fitz_doc_to_image(page, target_dpi=dpi)
                 if img is None:
                     print(f"pdf page {index} is empty, skip")
